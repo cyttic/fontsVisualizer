@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="he">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hebrew Fonts Visualizer</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #0f1117;
+      color: #e2e8f0;
+      font-family: sans-serif;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    header {
+      padding: 8px 16px;
+      background: #1a1d2e;
+      border-bottom: 1px solid #2d3148;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex-shrink: 0;
+    }
+
+    header h1 { font-size: 15px; font-weight: 600; color: #a5b4fc; }
+    #font-count { font-size: 12px; color: #64748b; }
+
+    #btn-download {
+      margin-left: auto;
+      padding: 6px 16px;
+      background: #4f46e5;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    #btn-download:hover:not(:disabled) { background: #4338ca; }
+    #btn-download:disabled { background: #2d3148; color: #475569; cursor: default; }
+
+    #selected-count { font-size: 12px; color: #64748b; }
+
+    #loading {
+      padding: 40px;
+      text-align: center;
+      color: #64748b;
+      font-size: 14px;
+    }
+
+    #scroll-wrap {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: auto;
+    }
+
+    #scroll-wrap::-webkit-scrollbar { width: 8px; height: 8px; }
+    #scroll-wrap::-webkit-scrollbar-track { background: #0f1117; }
+    #scroll-wrap::-webkit-scrollbar-thumb { background: #2d3148; border-radius: 4px; }
+    #scroll-wrap::-webkit-scrollbar-thumb:hover { background: #4c5280; }
+
+    table {
+      border-collapse: collapse;
+      table-layout: fixed;
+    }
+
+    col.col-check   { width: 34px; }
+    col.col-num     { width: 42px; }
+    col.col-pangram { width: 300px; }
+    col.col-letter  { width: 38px; }
+
+    thead th {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: #1a1d2e;
+      border-bottom: 2px solid #2d3148;
+      padding: 5px 4px;
+      font-size: 11px;
+      color: #94a3b8;
+      text-align: center;
+      white-space: nowrap;
+      font-weight: 500;
+      overflow: hidden;
+    }
+
+    th.col-check  { left: 0;    z-index: 20; position: sticky; }
+    th.col-num    { left: 34px; z-index: 20; position: sticky; color: #475569; }
+    th.col-pangram {
+      left: 76px; z-index: 20; position: sticky;
+      text-align: right; padding-right: 10px;
+      border-right: 1px solid #2d3148;
+    }
+
+    tbody tr { height: 50px; border-bottom: 1px solid #1e2235; }
+    tbody tr:hover { background: #161929; }
+    tbody tr:hover td { background: #161929; }
+    tbody tr.selected { background: #1e1f3b; }
+    tbody tr.selected td { background: #1e1f3b; }
+
+    td.col-check {
+      position: sticky; left: 0; z-index: 5;
+      background: #0f1117;
+      text-align: center; vertical-align: middle;
+    }
+
+    td.col-num {
+      position: sticky; left: 34px; z-index: 5;
+      background: #0f1117;
+      text-align: center; vertical-align: middle;
+      font-size: 10px; color: #374151;
+      font-variant-numeric: tabular-nums;
+      border-right: 1px solid #1e2235;
+    }
+
+    td.col-pangram {
+      position: sticky; left: 76px; z-index: 5;
+      background: #0f1117;
+      padding: 0 10px;
+      border-right: 1px solid #2d3148;
+      vertical-align: middle;
+      overflow: hidden;
+    }
+
+    .pangram-inner { display: flex; flex-direction: column; gap: 2px; }
+
+    .font-name {
+      font-size: 9px; color: #475569; direction: ltr;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+
+    .pangram-text {
+      font-size: 22px; line-height: 1;
+      direction: rtl; text-align: right;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+
+    td.col-letter { text-align: center; vertical-align: middle; overflow: hidden; }
+
+    .letter-inner { display: flex; flex-direction: column; align-items: center; gap: 1px; }
+
+    .letter-glyph { font-size: 26px; line-height: 1; color: #e2e8f0; }
+
+    .letter-label {
+      font-size: 9px; color: #4a5568;
+      font-family: "DejaVu Sans", Arial, sans-serif;
+    }
+
+    input[type="checkbox"] {
+      width: 15px; height: 15px; cursor: pointer;
+      accent-color: #4f46e5;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Hebrew Fonts Visualizer</h1>
+    <span id="font-count"></span>
+    <span id="selected-count"></span>
+    <button id="btn-download" disabled>Save selected</button>
+  </header>
+  <div id="loading">Loading fonts…</div>
+  <div id="scroll-wrap" style="display:none">
+    <table id="fonts-table">
+      <colgroup id="colgroup"></colgroup>
+      <thead id="thead"></thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+
+  <script>
+    const HEBREW = ['א','ב','ג','ד','ה','ו','ז','ח','ט','י','כ','ל','מ','נ','ס','ע','פ','צ','ק','ר','ש','ת'];
+    const PANGRAM = 'דג סקרן שט בים מאוכזב ולפתע מצא חברה';
+
+    let allFonts = [];
+
+    function updateSelectionUI() {
+      const checked = document.querySelectorAll('.font-checkbox:checked');
+      const n = checked.length;
+      const countEl = document.getElementById('selected-count');
+      countEl.textContent = n > 0 ? `${n} selected` : '';
+      document.getElementById('btn-download').disabled = n === 0;
+
+      const selectAll = document.getElementById('cb-all');
+      const total = document.querySelectorAll('.font-checkbox').length;
+      selectAll.indeterminate = n > 0 && n < total;
+      selectAll.checked = n === total;
+    }
+
+    async function downloadSelected() {
+      const checked = [...document.querySelectorAll('.font-checkbox:checked')];
+      const fonts = checked.map(cb => cb.dataset.font);
+      if (!fonts.length) return;
+
+      const btn = document.getElementById('btn-download');
+      btn.disabled = true;
+      btn.textContent = 'Preparing…';
+
+      try {
+        const res = await fetch('/api/download', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ fonts }),
+        });
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'hebrew_fonts.zip';
+        a.click();
+        URL.revokeObjectURL(url);
+      } finally {
+        btn.textContent = 'Save selected';
+        updateSelectionUI();
+      }
+    }
+
+    async function init() {
+      const res = await fetch('/api/fonts');
+      const { fonts } = await res.json();
+      allFonts = fonts;
+
+      document.getElementById('font-count').textContent = `${fonts.length} fonts`;
+      document.getElementById('btn-download').addEventListener('click', downloadSelected);
+
+      // @font-face rules
+      const styleEl = document.createElement('style');
+      styleEl.textContent = fonts.map(f => {
+        const name = f.replace(/\.ttf$/i, '');
+        return `@font-face{font-family:'${name}';src:url('/fonts/${encodeURIComponent(f)}');font-display:swap;}`;
+      }).join('');
+      document.head.appendChild(styleEl);
+
+      // <colgroup>
+      const cg = document.getElementById('colgroup');
+      ['col-check','col-num','col-pangram'].forEach(cls => {
+        const c = document.createElement('col');
+        c.className = cls;
+        cg.appendChild(c);
+      });
+      for (let i = 0; i < HEBREW.length; i++) {
+        const c = document.createElement('col');
+        c.className = 'col-letter';
+        cg.appendChild(c);
+      }
+
+      // Header row
+      const headerRow = document.createElement('tr');
+
+      const thCheck = document.createElement('th');
+      thCheck.className = 'col-check';
+      const cbAll = document.createElement('input');
+      cbAll.type = 'checkbox';
+      cbAll.id = 'cb-all';
+      cbAll.title = 'Select all';
+      cbAll.addEventListener('change', () => {
+        document.querySelectorAll('.font-checkbox').forEach(cb => {
+          cb.checked = cbAll.checked;
+          cb.closest('tr').classList.toggle('selected', cbAll.checked);
+        });
+        updateSelectionUI();
+      });
+      thCheck.appendChild(cbAll);
+      headerRow.appendChild(thCheck);
+
+      const thNum = document.createElement('th');
+      thNum.className = 'col-num';
+      thNum.textContent = '#';
+      headerRow.appendChild(thNum);
+
+      const thPangram = document.createElement('th');
+      thPangram.className = 'col-pangram';
+      thPangram.textContent = 'Font / Pangram';
+      headerRow.appendChild(thPangram);
+
+      for (const letter of HEBREW) {
+        const th = document.createElement('th');
+        th.textContent = letter;
+        headerRow.appendChild(th);
+      }
+      document.getElementById('thead').appendChild(headerRow);
+
+      // Body rows
+      const frag = document.createDocumentFragment();
+
+      fonts.forEach((f, idx) => {
+        const fontName = f.replace(/\.ttf$/i, '');
+        const tr = document.createElement('tr');
+
+        // Checkbox cell
+        const tdCheck = document.createElement('td');
+        tdCheck.className = 'col-check';
+        const cb = document.createElement('input');
+        cb.type = 'checkbox';
+        cb.className = 'font-checkbox';
+        cb.dataset.font = f;
+        cb.addEventListener('change', () => {
+          tr.classList.toggle('selected', cb.checked);
+          updateSelectionUI();
+        });
+        tdCheck.appendChild(cb);
+        tr.appendChild(tdCheck);
+
+        // Row number
+        const tdNum = document.createElement('td');
+        tdNum.className = 'col-num';
+        tdNum.textContent = idx + 1;
+        tr.appendChild(tdNum);
+
+        // Pangram
+        const tdPangram = document.createElement('td');
+        tdPangram.className = 'col-pangram';
+        tdPangram.innerHTML =
+          `<div class="pangram-inner">` +
+          `<span class="font-name">${fontName}</span>` +
+          `<span class="pangram-text" style="font-family:'${fontName}'">${PANGRAM}</span>` +
+          `</div>`;
+        tr.appendChild(tdPangram);
+
+        // Letters
+        for (const letter of HEBREW) {
+          const td = document.createElement('td');
+          td.className = 'col-letter';
+          td.innerHTML =
+            `<div class="letter-inner">` +
+            `<span class="letter-glyph" style="font-family:'${fontName}'">${letter}</span>` +
+            `<span class="letter-label">${letter}</span>` +
+            `</div>`;
+          tr.appendChild(td);
+        }
+
+        frag.appendChild(tr);
+      });
+
+      document.getElementById('tbody').appendChild(frag);
+      document.getElementById('loading').style.display = 'none';
+      document.getElementById('scroll-wrap').style.display = 'block';
+    }
+
+    init().catch(err => {
+      document.getElementById('loading').textContent = 'Error: ' + err.message;
+    });
+  </script>
+</body>
+</html>
