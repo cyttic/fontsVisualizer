@@ -26,7 +26,6 @@
       gap: 14px;
       flex-shrink: 0;
     }
-
     header h1 { font-size: 15px; font-weight: 600; color: #a5b4fc; }
     #font-count { font-size: 12px; color: #64748b; }
 
@@ -44,52 +43,31 @@
     }
     #btn-download:hover:not(:disabled) { background: #4338ca; }
     #btn-download:disabled { background: #2d3148; color: #475569; cursor: default; }
-
     #selected-count { font-size: 12px; color: #64748b; }
 
-    #loading {
-      padding: 40px;
-      text-align: center;
-      color: #64748b;
-      font-size: 14px;
-    }
+    #loading { padding: 40px; text-align: center; color: #64748b; font-size: 14px; }
 
-    #scroll-wrap {
-      flex: 1;
-      overflow-y: auto;
-      overflow-x: auto;
-    }
-
+    #scroll-wrap { flex: 1; overflow-y: auto; overflow-x: auto; }
     #scroll-wrap::-webkit-scrollbar { width: 8px; height: 8px; }
     #scroll-wrap::-webkit-scrollbar-track { background: #0f1117; }
     #scroll-wrap::-webkit-scrollbar-thumb { background: #2d3148; border-radius: 4px; }
     #scroll-wrap::-webkit-scrollbar-thumb:hover { background: #4c5280; }
 
-    table {
-      border-collapse: collapse;
-      table-layout: fixed;
-    }
-
+    table { border-collapse: collapse; table-layout: fixed; }
     col.col-check   { width: 34px; }
     col.col-num     { width: 42px; }
     col.col-pangram { width: 300px; }
     col.col-letter  { width: 38px; }
 
     thead th {
-      position: sticky;
-      top: 0;
-      z-index: 10;
+      position: sticky; top: 0; z-index: 10;
       background: #1a1d2e;
       border-bottom: 2px solid #2d3148;
       padding: 5px 4px;
-      font-size: 11px;
-      color: #94a3b8;
-      text-align: center;
-      white-space: nowrap;
-      font-weight: 500;
-      overflow: hidden;
+      font-size: 11px; color: #94a3b8;
+      text-align: center; white-space: nowrap;
+      font-weight: 500; overflow: hidden;
     }
-
     th.col-check  { left: 0;    z-index: 20; position: sticky; }
     th.col-num    { left: 34px; z-index: 20; position: sticky; color: #475569; }
     th.col-pangram {
@@ -109,7 +87,6 @@
       background: #0f1117;
       text-align: center; vertical-align: middle;
     }
-
     td.col-num {
       position: sticky; left: 34px; z-index: 5;
       background: #0f1117;
@@ -118,44 +95,105 @@
       font-variant-numeric: tabular-nums;
       border-right: 1px solid #1e2235;
     }
-
     td.col-pangram {
       position: sticky; left: 76px; z-index: 5;
       background: #0f1117;
       padding: 0 10px;
       border-right: 1px solid #2d3148;
-      vertical-align: middle;
-      overflow: hidden;
+      vertical-align: middle; overflow: hidden;
     }
-
     .pangram-inner { display: flex; flex-direction: column; gap: 2px; }
-
     .font-name {
       font-size: 9px; color: #475569; direction: ltr;
       white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
-
     .pangram-text {
       font-size: 22px; line-height: 1;
       direction: rtl; text-align: right;
       white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
 
-    td.col-letter { text-align: center; vertical-align: middle; overflow: hidden; }
+    td.col-letter {
+      text-align: center; vertical-align: middle;
+      overflow: hidden; cursor: pointer; position: relative;
+    }
+    td.col-letter:hover .letter-glyph { color: #a5b4fc; }
+
+    /* Refine selection states */
+    td.col-letter.target-selected {
+      outline: 2px solid #f59e0b;
+      outline-offset: -2px;
+      background: rgba(245,158,11,0.08) !important;
+    }
+    td.col-letter.example-hover:hover {
+      outline: 2px solid #34d399;
+      outline-offset: -2px;
+      background: rgba(52,211,153,0.08) !important;
+      cursor: crosshair;
+    }
+    td.col-letter.processing-cell {
+      opacity: 0.5;
+    }
+    td.col-letter.refined-cell .letter-glyph::after {
+      content: '✓';
+      position: absolute;
+      top: 2px; right: 3px;
+      font-size: 8px; color: #34d399;
+      font-family: sans-serif;
+    }
 
     .letter-inner { display: flex; flex-direction: column; align-items: center; gap: 1px; }
-
     .letter-glyph { font-size: 26px; line-height: 1; color: #e2e8f0; }
+    .letter-label { font-size: 9px; color: #4a5568; font-family: "DejaVu Sans", Arial, sans-serif; }
 
-    .letter-label {
-      font-size: 9px; color: #4a5568;
-      font-family: "DejaVu Sans", Arial, sans-serif;
-    }
+    input[type="checkbox"] { width: 15px; height: 15px; cursor: pointer; accent-color: #4f46e5; }
 
-    input[type="checkbox"] {
-      width: 15px; height: 15px; cursor: pointer;
-      accent-color: #4f46e5;
+    /* ── Refine toolbar (bottom bar) ─────────────────────────────────────── */
+    #refine-bar {
+      display: none;
+      flex-shrink: 0;
+      background: #12152a;
+      border-top: 1px solid #2d3148;
+      padding: 8px 16px;
+      align-items: center;
+      gap: 12px;
+      font-size: 13px;
     }
+    #refine-bar.visible { display: flex; }
+
+    #refine-info { color: #94a3b8; flex: 1; }
+    #refine-info strong { color: #e2e8f0; }
+
+    #btn-refine-example {
+      padding: 5px 14px;
+      background: #d97706;
+      color: #fff; border: none; border-radius: 6px;
+      font-size: 12px; font-weight: 500; cursor: pointer;
+    }
+    #btn-refine-example:hover { background: #b45309; }
+    #btn-refine-example:disabled { background: #2d3148; color: #475569; cursor: default; }
+
+    #btn-refine-cancel {
+      padding: 5px 12px;
+      background: transparent;
+      color: #64748b; border: 1px solid #2d3148; border-radius: 6px;
+      font-size: 12px; cursor: pointer;
+    }
+    #btn-refine-cancel:hover { color: #e2e8f0; border-color: #4c5280; }
+
+    #refine-progress-wrap {
+      display: flex; align-items: center; gap: 8px;
+    }
+    #refine-progress-bar-outer {
+      width: 120px; height: 6px;
+      background: #2d3148; border-radius: 3px; overflow: hidden;
+    }
+    #refine-progress-bar {
+      height: 100%; width: 0%;
+      background: #4f46e5; border-radius: 3px;
+      transition: width 0.3s;
+    }
+    #refine-progress-text { font-size: 11px; color: #64748b; min-width: 30px; }
   </style>
 </head>
 <body>
@@ -165,7 +203,9 @@
     <span id="selected-count"></span>
     <button id="btn-download" disabled>Save selected</button>
   </header>
+
   <div id="loading">Loading fonts…</div>
+
   <div id="scroll-wrap" style="display:none">
     <table id="fonts-table">
       <colgroup id="colgroup"></colgroup>
@@ -174,90 +214,221 @@
     </table>
   </div>
 
+  <!-- Bottom toolbar for refine workflow -->
+  <div id="refine-bar">
+    <span id="refine-info">Select a letter to refine</span>
+
+    <div id="refine-progress-wrap" style="display:none">
+      <div id="refine-progress-bar-outer">
+        <div id="refine-progress-bar"></div>
+      </div>
+      <span id="refine-progress-text">0%</span>
+    </div>
+
+    <button id="btn-refine-example" disabled>Refine by example</button>
+    <button id="btn-refine-cancel">Cancel</button>
+  </div>
+
   <script>
     const HEBREW = ['א','ב','ג','ד','ה','ו','ז','ח','ט','י','כ','ל','מ','נ','ס','ע','פ','צ','ק','ר','ש','ת'];
+    const CODEPOINTS = HEBREW.map(c => c.codePointAt(0));
     const PANGRAM = 'דג סקרן שט בים מאוכזב ולפתע מצא חברה';
 
-    let allFonts = [];
+    // ── Refine state machine ─────────────────────────────────────────────────
+    // states: idle | target_selected | example_mode | processing
+    let refineState = 'idle';
+    let targetCell  = null;
+    let pollTimer   = null;
 
-    function updateSelectionUI() {
-      const checked = document.querySelectorAll('.font-checkbox:checked');
-      const n = checked.length;
-      const countEl = document.getElementById('selected-count');
-      countEl.textContent = n > 0 ? `${n} selected` : '';
-      document.getElementById('btn-download').disabled = n === 0;
+    const refineBar        = document.getElementById('refine-bar');
+    const refineInfo       = document.getElementById('refine-info');
+    const btnRefineExample = document.getElementById('btn-refine-example');
+    const btnRefineCancel  = document.getElementById('btn-refine-cancel');
+    const progressWrap     = document.getElementById('refine-progress-wrap');
+    const progressBar      = document.getElementById('refine-progress-bar');
+    const progressText     = document.getElementById('refine-progress-text');
 
-      const selectAll = document.getElementById('cb-all');
-      const total = document.querySelectorAll('.font-checkbox').length;
-      selectAll.indeterminate = n > 0 && n < total;
-      selectAll.checked = n === total;
-    }
+    function setRefineState(state) {
+      refineState = state;
 
-    async function downloadSelected() {
-      const checked = [...document.querySelectorAll('.font-checkbox:checked')];
-      const fonts = checked.map(cb => cb.dataset.font);
-      if (!fonts.length) return;
+      // Reset all cell highlights
+      document.querySelectorAll('td.col-letter').forEach(td => {
+        td.classList.remove('example-hover');
+      });
 
-      const btn = document.getElementById('btn-download');
-      btn.disabled = true;
-      btn.textContent = 'Preparing…';
+      if (state === 'idle') {
+        refineBar.classList.remove('visible');
+        clearTargetHighlight();
+        progressWrap.style.display = 'none';
+        btnRefineExample.disabled = false;
+        btnRefineExample.textContent = 'Refine by example';
 
-      try {
-        const res = await fetch('/api/download', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ fonts }),
+      } else if (state === 'target_selected') {
+        refineBar.classList.add('visible');
+        const font = targetCell.dataset.font;
+        const letter = targetCell.dataset.letter;
+        refineInfo.innerHTML = `Target: <strong>${font}</strong> — <strong>${letter}</strong> &nbsp; Click "Refine by example" then click a reference letter`;
+        btnRefineExample.disabled = false;
+        progressWrap.style.display = 'none';
+
+      } else if (state === 'example_mode') {
+        refineInfo.innerHTML = `<strong style="color:#34d399">Now click any letter as the example…</strong>`;
+        btnRefineExample.disabled = true;
+        document.querySelectorAll('td.col-letter').forEach(td => {
+          if (td !== targetCell) td.classList.add('example-hover');
         });
-        const blob = await res.blob();
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'hebrew_fonts.zip';
-        a.click();
-        URL.revokeObjectURL(url);
-      } finally {
-        btn.textContent = 'Save selected';
-        updateSelectionUI();
+
+      } else if (state === 'processing') {
+        refineInfo.innerHTML = `Refining <strong>${targetCell.dataset.letter}</strong> in <strong>${targetCell.dataset.font}</strong>…`;
+        btnRefineExample.disabled = true;
+        progressWrap.style.display = 'flex';
+        setProgress(0);
       }
     }
 
+    function clearTargetHighlight() {
+      document.querySelectorAll('td.col-letter.target-selected').forEach(td => {
+        td.classList.remove('target-selected');
+      });
+      targetCell = null;
+    }
+
+    function setProgress(pct) {
+      progressBar.style.width = pct + '%';
+      progressText.textContent = pct + '%';
+    }
+
+    btnRefineExample.addEventListener('click', () => {
+      if (refineState === 'target_selected') setRefineState('example_mode');
+    });
+
+    btnRefineCancel.addEventListener('click', () => {
+      if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+      setRefineState('idle');
+    });
+
+    // ── Letter cell click handler ────────────────────────────────────────────
+    document.addEventListener('click', e => {
+      const cell = e.target.closest('td.col-letter');
+      if (!cell) return;
+
+      if (refineState === 'idle' || refineState === 'target_selected') {
+        clearTargetHighlight();
+        targetCell = cell;
+        cell.classList.add('target-selected');
+        setRefineState('target_selected');
+
+      } else if (refineState === 'example_mode') {
+        if (cell === targetCell) return;
+        startRefineJob(targetCell, cell);
+      }
+    });
+
+    // ── Start refinement ─────────────────────────────────────────────────────
+    async function startRefineJob(tCell, eCell) {
+      setRefineState('processing');
+      tCell.classList.add('processing-cell');
+
+      try {
+        const res = await fetch('/api/refine', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            target_font:  tCell.dataset.font,
+            target_cp:    parseInt(tCell.dataset.cp),
+            example_font: eCell.dataset.font,
+            example_cp:   parseInt(eCell.dataset.cp),
+          }),
+        });
+        const { job_id } = await res.json();
+        pollJob(job_id, tCell);
+      } catch (err) {
+        alert('Failed to start refine job: ' + err.message);
+        tCell.classList.remove('processing-cell');
+        setRefineState('target_selected');
+      }
+    }
+
+    function pollJob(job_id, tCell) {
+      pollTimer = setInterval(async () => {
+        const res = await fetch(`/api/refine/${job_id}`);
+        const job = await res.json();
+
+        setProgress(job.progress || 0);
+
+        if (job.status === 'done') {
+          clearInterval(pollTimer);
+          pollTimer = null;
+          tCell.classList.remove('processing-cell');
+          applyRefinedFont(tCell, job.result_font);
+          setRefineState('idle');
+
+        } else if (job.status === 'error') {
+          clearInterval(pollTimer);
+          pollTimer = null;
+          tCell.classList.remove('processing-cell');
+          alert('Refine error: ' + job.error);
+          setRefineState('target_selected');
+        }
+      }, 1500);
+    }
+
+    // ── Apply refined font to the row ────────────────────────────────────────
+    function applyRefinedFont(tCell, resultFont) {
+      const fontFile   = tCell.dataset.font;
+      const fontFamily = fontFile.replace(/\.ttf$/i, '');
+      const cp         = parseInt(tCell.dataset.cp);
+      const bust       = Date.now();
+
+      // Re-declare the same font-family with a cache-busting URL so the
+      // browser fetches the updated file that was just saved on disk.
+      const styleEl = document.createElement('style');
+      styleEl.textContent =
+        `@font-face{font-family:'${fontFamily}';` +
+        `src:url('/fonts/${encodeURIComponent(fontFile)}?v=${bust}');` +
+        `font-display:swap;}`;
+      document.head.appendChild(styleEl);
+
+      // Force-repaint the whole row so the browser picks up the new face
+      const tr = tCell.closest('tr');
+      tr.style.visibility = 'hidden';
+      requestAnimationFrame(() => { tr.style.visibility = ''; });
+
+      // Mark the refined cell
+      tr.querySelectorAll('td.col-letter').forEach(td => {
+        if (parseInt(td.dataset.cp) === cp) td.classList.add('refined-cell');
+      });
+    }
+
+    // ── Font list + table build ──────────────────────────────────────────────
     async function init() {
       const res = await fetch('/api/fonts');
-      const { fonts } = await res.json();
-      allFonts = fonts;
+      const { fonts, versions } = await res.json();
 
       document.getElementById('font-count').textContent = `${fonts.length} fonts`;
       document.getElementById('btn-download').addEventListener('click', downloadSelected);
 
-      // @font-face rules
       const styleEl = document.createElement('style');
       styleEl.textContent = fonts.map(f => {
         const name = f.replace(/\.ttf$/i, '');
-        return `@font-face{font-family:'${name}';src:url('/fonts/${encodeURIComponent(f)}');font-display:swap;}`;
+        const v = versions[f] || 0;
+        return `@font-face{font-family:'${name}';src:url('/fonts/${encodeURIComponent(f)}?v=${v}');font-display:swap;}`;
       }).join('');
       document.head.appendChild(styleEl);
 
-      // <colgroup>
+      // colgroup
       const cg = document.getElementById('colgroup');
       ['col-check','col-num','col-pangram'].forEach(cls => {
-        const c = document.createElement('col');
-        c.className = cls;
-        cg.appendChild(c);
+        const c = document.createElement('col'); c.className = cls; cg.appendChild(c);
       });
-      for (let i = 0; i < HEBREW.length; i++) {
-        const c = document.createElement('col');
-        c.className = 'col-letter';
-        cg.appendChild(c);
-      }
+      HEBREW.forEach(() => {
+        const c = document.createElement('col'); c.className = 'col-letter'; cg.appendChild(c);
+      });
 
-      // Header row
+      // header
       const headerRow = document.createElement('tr');
-
-      const thCheck = document.createElement('th');
-      thCheck.className = 'col-check';
-      const cbAll = document.createElement('input');
-      cbAll.type = 'checkbox';
-      cbAll.id = 'cb-all';
+      const thCheck = document.createElement('th'); thCheck.className = 'col-check';
+      const cbAll = document.createElement('input'); cbAll.type = 'checkbox'; cbAll.id = 'cb-all';
       cbAll.title = 'Select all';
       cbAll.addEventListener('change', () => {
         document.querySelectorAll('.font-checkbox').forEach(cb => {
@@ -266,74 +437,50 @@
         });
         updateSelectionUI();
       });
-      thCheck.appendChild(cbAll);
-      headerRow.appendChild(thCheck);
+      thCheck.appendChild(cbAll); headerRow.appendChild(thCheck);
 
-      const thNum = document.createElement('th');
-      thNum.className = 'col-num';
-      thNum.textContent = '#';
-      headerRow.appendChild(thNum);
-
-      const thPangram = document.createElement('th');
-      thPangram.className = 'col-pangram';
-      thPangram.textContent = 'Font / Pangram';
-      headerRow.appendChild(thPangram);
-
-      for (const letter of HEBREW) {
-        const th = document.createElement('th');
-        th.textContent = letter;
-        headerRow.appendChild(th);
-      }
+      const thNum = document.createElement('th'); thNum.className = 'col-num'; thNum.textContent = '#'; headerRow.appendChild(thNum);
+      const thPan = document.createElement('th'); thPan.className = 'col-pangram'; thPan.textContent = 'Font / Pangram'; headerRow.appendChild(thPan);
+      HEBREW.forEach(l => {
+        const th = document.createElement('th'); th.textContent = l; headerRow.appendChild(th);
+      });
       document.getElementById('thead').appendChild(headerRow);
 
-      // Body rows
+      // rows
       const frag = document.createDocumentFragment();
-
       fonts.forEach((f, idx) => {
         const fontName = f.replace(/\.ttf$/i, '');
         const tr = document.createElement('tr');
 
-        // Checkbox cell
-        const tdCheck = document.createElement('td');
-        tdCheck.className = 'col-check';
-        const cb = document.createElement('input');
-        cb.type = 'checkbox';
-        cb.className = 'font-checkbox';
-        cb.dataset.font = f;
-        cb.addEventListener('change', () => {
-          tr.classList.toggle('selected', cb.checked);
-          updateSelectionUI();
-        });
-        tdCheck.appendChild(cb);
-        tr.appendChild(tdCheck);
+        const tdCheck = document.createElement('td'); tdCheck.className = 'col-check';
+        const cb = document.createElement('input'); cb.type = 'checkbox'; cb.className = 'font-checkbox'; cb.dataset.font = f;
+        cb.addEventListener('change', () => { tr.classList.toggle('selected', cb.checked); updateSelectionUI(); });
+        tdCheck.appendChild(cb); tr.appendChild(tdCheck);
 
-        // Row number
-        const tdNum = document.createElement('td');
-        tdNum.className = 'col-num';
-        tdNum.textContent = idx + 1;
-        tr.appendChild(tdNum);
+        const tdNum = document.createElement('td'); tdNum.className = 'col-num'; tdNum.textContent = idx + 1; tr.appendChild(tdNum);
 
-        // Pangram
-        const tdPangram = document.createElement('td');
-        tdPangram.className = 'col-pangram';
-        tdPangram.innerHTML =
+        const tdPan = document.createElement('td'); tdPan.className = 'col-pangram';
+        tdPan.innerHTML =
           `<div class="pangram-inner">` +
           `<span class="font-name">${fontName}</span>` +
           `<span class="pangram-text" style="font-family:'${fontName}'">${PANGRAM}</span>` +
           `</div>`;
-        tr.appendChild(tdPangram);
+        tr.appendChild(tdPan);
 
-        // Letters
-        for (const letter of HEBREW) {
+        HEBREW.forEach((letter, li) => {
+          const cp = CODEPOINTS[li];
           const td = document.createElement('td');
           td.className = 'col-letter';
+          td.dataset.font   = f;
+          td.dataset.letter = letter;
+          td.dataset.cp     = cp;
           td.innerHTML =
             `<div class="letter-inner">` +
             `<span class="letter-glyph" style="font-family:'${fontName}'">${letter}</span>` +
             `<span class="letter-label">${letter}</span>` +
             `</div>`;
           tr.appendChild(td);
-        }
+        });
 
         frag.appendChild(tr);
       });
@@ -341,6 +488,39 @@
       document.getElementById('tbody').appendChild(frag);
       document.getElementById('loading').style.display = 'none';
       document.getElementById('scroll-wrap').style.display = 'block';
+    }
+
+    // ── Download ─────────────────────────────────────────────────────────────
+    function updateSelectionUI() {
+      const checked = document.querySelectorAll('.font-checkbox:checked');
+      const n = checked.length;
+      document.getElementById('selected-count').textContent = n > 0 ? `${n} selected` : '';
+      document.getElementById('btn-download').disabled = n === 0;
+      const cbAll = document.getElementById('cb-all');
+      const total = document.querySelectorAll('.font-checkbox').length;
+      cbAll.indeterminate = n > 0 && n < total;
+      cbAll.checked = n === total && total > 0;
+    }
+
+    async function downloadSelected() {
+      const fonts = [...document.querySelectorAll('.font-checkbox:checked')].map(cb => cb.dataset.font);
+      if (!fonts.length) return;
+      const btn = document.getElementById('btn-download');
+      btn.disabled = true; btn.textContent = 'Preparing…';
+      try {
+        const res = await fetch('/api/download', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ fonts }),
+        });
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a'); a.href = url; a.download = 'hebrew_fonts.zip'; a.click();
+        URL.revokeObjectURL(url);
+      } finally {
+        btn.textContent = 'Save selected';
+        updateSelectionUI();
+      }
     }
 
     init().catch(err => {
