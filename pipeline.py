@@ -105,7 +105,7 @@ def _signed_area(pts):
     return a / 2.0
 
 
-def image_to_font(refined_img, orig_font_path, glyph_name, out_path):
+def image_to_font(refined_img, orig_font_path, glyph_name, out_path, fallback_bbox=None):
     """
     Trace contours from refined_img, map to font coordinate space,
     replace glyph in a copy of the font, save to out_path.
@@ -132,8 +132,18 @@ def image_to_font(refined_img, orig_font_path, glyph_name, out_path):
     font = TTFont(orig_font_path)
     glyf = font["glyf"]
     orig = glyf[glyph_name]
-    fx_min, fy_min = orig.xMin, orig.yMin
-    fx_max, fy_max = orig.xMax, orig.yMax
+    orig.expand(glyf)   # force parse from raw bytes
+
+    # Fall back to example glyph bbox if the target glyph is empty
+    if hasattr(orig, "xMin") and orig.numberOfContours != 0:
+        fx_min, fy_min = orig.xMin, orig.yMin
+        fx_max, fy_max = orig.xMax, orig.yMax
+    elif fallback_bbox:
+        fx_min, fy_min, fx_max, fy_max = fallback_bbox
+    else:
+        head = font["head"]
+        fx_min, fy_min = 0, 0
+        fx_max, fy_max = head.unitsPerEm, head.unitsPerEm
 
     def to_font_coords(px, py):
         nx = (px - px_min) / max(px_max - px_min, 1)
@@ -214,15 +224,27 @@ def run_refine_job(job_id, jobs, target_font, target_cp, example_font, example_c
         refined = run_sdxl(Image.fromarray(warped))
 
         update(80)
-        target_path = os.path.join(FONTS_DIR, target_font)
+        target_path  = os.path.join(FONTS_DIR, target_font)
+        example_path = os.path.join(FONTS_DIR, example_font)
+
         tf = TTFont(target_path)
         glyph_name = tf.getBestCmap()[target_cp]
         tf.close()
 
+        # Get example glyph bbox as fallback for empty target glyphs
+        ef = TTFont(example_path)
+        eg = ef["glyf"][ef.getBestCmap()[example_cp]]
+        eg.expand(ef["glyf"])
+        if hasattr(eg, "xMin") and eg.numberOfContours != 0:
+            fallback_bbox = (eg.xMin, eg.yMin, eg.xMax, eg.yMax)
+        else:
+            fallback_bbox = None
+        ef.close()
+
         out_name = f"{target_font[:-4]}_cp{target_cp:04X}.ttf"
         out_path = os.path.join(MODIFIED_FONTS_DIR, out_name)
 
-        image_to_font(refined, target_path, glyph_name, out_path)
+        image_to_font(refined, target_path, glyph_name, out_path, fallback_bbox=fallback_bbox)
 
         # Overwrite the original font so the change persists on reload
         import shutil
