@@ -204,6 +204,35 @@ def image_to_font(refined_img, orig_font_path, glyph_name, out_path, fallback_bb
     return out_path
 
 
+# ── Direct glyph copy (no ML) ────────────────────────────────────────────────
+
+def replace_glyph(target_font, target_cp, example_font, example_cp):
+    """Copy glyph from example font directly into target font and save."""
+    target_path  = os.path.join(FONTS_DIR, target_font)
+    example_path = os.path.join(FONTS_DIR, example_font)
+
+    ef = TTFont(example_path)
+    src_name = ef.getBestCmap()[example_cp]
+    src_glyph = ef["glyf"][src_name]
+    src_glyph.expand(ef["glyf"])
+
+    tf = TTFont(target_path)
+    dst_name = tf.getBestCmap()[target_cp]
+    tf["glyf"][dst_name] = src_glyph
+    # Preserve horizontal metrics from example
+    if src_name in ef["hmtx"].metrics and dst_name in tf["hmtx"].metrics:
+        tf["hmtx"].metrics[dst_name] = ef["hmtx"].metrics[src_name]
+    ef.close()
+
+    out_name = f"{target_font[:-4]}_cp{target_cp:04X}.ttf"
+    out_path  = os.path.join(MODIFIED_FONTS_DIR, out_name)
+    tf.save(out_path)
+    import shutil
+    shutil.copy2(out_path, target_path)
+    tf.close()
+    return out_name
+
+
 # ── Full job ──────────────────────────────────────────────────────────────────
 
 def run_refine_job(job_id, jobs, target_font, target_cp, example_font, example_cp,

@@ -173,6 +173,15 @@
     #btn-refine-example:hover { background: #b45309; }
     #btn-refine-example:disabled { background: #2d3148; color: #475569; cursor: default; }
 
+    #btn-replace-example {
+      padding: 5px 14px;
+      background: #059669;
+      color: #fff; border: none; border-radius: 6px;
+      font-size: 12px; font-weight: 500; cursor: pointer;
+    }
+    #btn-replace-example:hover { background: #047857; }
+    #btn-replace-example:disabled { background: #2d3148; color: #475569; cursor: default; }
+
     #btn-refine-cancel {
       padding: 5px 12px;
       background: transparent;
@@ -226,6 +235,7 @@
     </div>
 
     <button id="btn-refine-example" disabled>Refine by example</button>
+    <button id="btn-replace-example" disabled>Replace by example</button>
     <button id="btn-refine-cancel">Cancel</button>
   </div>
 
@@ -243,8 +253,10 @@
 
     const refineBar        = document.getElementById('refine-bar');
     const refineInfo       = document.getElementById('refine-info');
-    const btnRefineExample = document.getElementById('btn-refine-example');
-    const btnRefineCancel  = document.getElementById('btn-refine-cancel');
+    const btnRefineExample  = document.getElementById('btn-refine-example');
+    const btnReplaceExample = document.getElementById('btn-replace-example');
+    const btnRefineCancel   = document.getElementById('btn-refine-cancel');
+    let   pendingAction = 'refine';   // 'refine' | 'replace'
     const progressWrap     = document.getElementById('refine-progress-wrap');
     const progressBar      = document.getElementById('refine-progress-bar');
     const progressText     = document.getElementById('refine-progress-text');
@@ -268,20 +280,25 @@
         refineBar.classList.add('visible');
         const font = targetCell.dataset.font;
         const letter = targetCell.dataset.letter;
-        refineInfo.innerHTML = `Target: <strong>${font}</strong> — <strong>${letter}</strong> &nbsp; Click "Refine by example" then click a reference letter`;
+        refineInfo.innerHTML = `Target: <strong>${font}</strong> — <strong>${letter}</strong> &nbsp; Choose an action, then click a reference letter`;
         btnRefineExample.disabled = false;
+        btnReplaceExample.disabled = false;
         progressWrap.style.display = 'none';
 
       } else if (state === 'example_mode') {
-        refineInfo.innerHTML = `<strong style="color:#34d399">Now click any letter as the example…</strong>`;
+        const actionLabel = pendingAction === 'replace' ? 'Replace' : 'Refine';
+        refineInfo.innerHTML = `<strong style="color:#34d399">${actionLabel}: now click any letter as the example…</strong>`;
         btnRefineExample.disabled = true;
+        btnReplaceExample.disabled = true;
         document.querySelectorAll('td.col-letter').forEach(td => {
           if (td !== targetCell) td.classList.add('example-hover');
         });
 
       } else if (state === 'processing') {
-        refineInfo.innerHTML = `Refining <strong>${targetCell.dataset.letter}</strong> in <strong>${targetCell.dataset.font}</strong>…`;
+        const verb = pendingAction === 'replace' ? 'Replacing' : 'Refining';
+        refineInfo.innerHTML = `${verb} <strong>${targetCell.dataset.letter}</strong> in <strong>${targetCell.dataset.font}</strong>…`;
         btnRefineExample.disabled = true;
+        btnReplaceExample.disabled = true;
         progressWrap.style.display = 'flex';
         setProgress(0);
       }
@@ -300,7 +317,10 @@
     }
 
     btnRefineExample.addEventListener('click', () => {
-      if (refineState === 'target_selected') setRefineState('example_mode');
+      if (refineState === 'target_selected') { pendingAction = 'refine'; setRefineState('example_mode'); }
+    });
+    btnReplaceExample.addEventListener('click', () => {
+      if (refineState === 'target_selected') { pendingAction = 'replace'; setRefineState('example_mode'); }
     });
 
     btnRefineCancel.addEventListener('click', () => {
@@ -321,7 +341,8 @@
 
       } else if (refineState === 'example_mode') {
         if (cell === targetCell) return;
-        startRefineJob(targetCell, cell);
+        if (pendingAction === 'replace') startReplaceJob(targetCell, cell);
+        else startRefineJob(targetCell, cell);
       }
     });
 
@@ -345,6 +366,31 @@
         pollJob(job_id, tCell);
       } catch (err) {
         alert('Failed to start refine job: ' + err.message);
+        tCell.classList.remove('processing-cell');
+        setRefineState('target_selected');
+      }
+    }
+
+    async function startReplaceJob(tCell, eCell) {
+      setRefineState('processing');
+      tCell.classList.add('processing-cell');
+      try {
+        const res = await fetch('/api/replace', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            target_font:  tCell.dataset.font,
+            target_cp:    parseInt(tCell.dataset.cp),
+            example_font: eCell.dataset.font,
+            example_cp:   parseInt(eCell.dataset.cp),
+          }),
+        });
+        const data = await res.json();
+        tCell.classList.remove('processing-cell');
+        applyRefinedFont(tCell, data.result_font);
+        setRefineState('idle');
+      } catch (err) {
+        alert('Replace error: ' + err.message);
         tCell.classList.remove('processing-cell');
         setRefineState('target_selected');
       }

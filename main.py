@@ -7,7 +7,7 @@ import uuid
 import threading
 import zipfile
 from pydantic import BaseModel
-from pipeline import run_refine_job, MODIFIED_FONTS_DIR
+from pipeline import run_refine_job, replace_glyph, MODIFIED_FONTS_DIR
 
 app = FastAPI()
 
@@ -71,6 +71,22 @@ def serve_modified_font(filename: str):
     if not os.path.isfile(path):
         raise HTTPException(status_code=404)
     return FileResponse(path, media_type="font/ttf")
+
+
+class ReplaceRequest(BaseModel):
+    target_font: str
+    target_cp: int
+    example_font: str
+    example_cp: int
+
+
+@app.post("/api/replace")
+def do_replace(req: ReplaceRequest):
+    for f in (req.target_font, req.example_font):
+        if ".." in f or "/" in f:
+            raise HTTPException(status_code=400)
+    result_font = replace_glyph(req.target_font, req.target_cp, req.example_font, req.example_cp)
+    return {"result_font": result_font, "target_font": req.target_font}
 
 
 class DownloadRequest(BaseModel):
