@@ -362,10 +362,14 @@
             example_cp:   parseInt(eCell.dataset.cp),
           }),
         });
+        if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err.detail || res.statusText);
+        }
         const { job_id } = await res.json();
         pollJob(job_id, tCell);
       } catch (err) {
-        alert('Failed to start refine job: ' + err.message);
+        alert(err.message);
         tCell.classList.remove('processing-cell');
         setRefineState('target_selected');
       }

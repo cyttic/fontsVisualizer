@@ -1,0 +1,48 @@
+name: Build → Docker Hub → Azure VM
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/fonts-visualizer:latest
+
+      - name: Deploy to Azure VM
+        uses: appleboy/ssh-action@v1
+        with:
+          host:     ${{ secrets.AZURE_VM_HOST }}
+          username: ${{ secrets.AZURE_VM_USER }}
+          key:      ${{ secrets.AZURE_VM_SSH_KEY }}
+          script: |
+            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/fonts-visualizer:latest
+
+            docker stop fonts-visualizer 2>/dev/null || true
+            docker rm   fonts-visualizer 2>/dev/null || true
+
+            docker run -d \
+              --name fonts-visualizer \
+              --restart unless-stopped \
+              -p 80:8000 \
+              -v fonts-data:/app/fonts \
+              -v fonts-modified-data:/app/fonts_modified \
+              ${{ secrets.DOCKERHUB_USERNAME }}/fonts-visualizer:latest
+
+            docker image prune -f

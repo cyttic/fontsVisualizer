@@ -29,6 +29,14 @@ _pipe = None
 _pipe_lock = threading.Lock()
 
 
+def gpu_available():
+    try:
+        import torch
+        return torch.cuda.is_available()
+    except ImportError:
+        return False
+
+
 def get_pipe():
     global _pipe
     if _pipe is None:

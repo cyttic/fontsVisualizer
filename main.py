@@ -7,7 +7,7 @@ import uuid
 import threading
 import zipfile
 from pydantic import BaseModel
-from pipeline import run_refine_job, replace_glyph, MODIFIED_FONTS_DIR
+from pipeline import run_refine_job, replace_glyph, gpu_available, MODIFIED_FONTS_DIR
 
 app = FastAPI()
 
@@ -43,6 +43,11 @@ class RefineRequest(BaseModel):
 
 @app.post("/api/refine")
 def start_refine(req: RefineRequest):
+    if not gpu_available():
+        raise HTTPException(
+            status_code=503,
+            detail="GPU not available on this server. 'Refine by example' requires CUDA.",
+        )
     for f in (req.target_font, req.example_font):
         if ".." in f or "/" in f:
             raise HTTPException(status_code=400)

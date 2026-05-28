@@ -1,0 +1,7 @@
+fonts_modified/
+__pycache__/
+*.pyc
+.git/
+.gitignore
+refine_glyph.py
+download_model.py
