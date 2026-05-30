@@ -34,7 +34,7 @@ jobs:
 
       - name: Deploy to Azure VM
         run: |
-          ssh ${{ secrets.AZURE_VM_USER }}@${{ secrets.AZURE_VM_HOST }} << 'ENDSSH'
+          ssh ${{ secrets.AZURE_VM_USER }}@${{ secrets.AZURE_VM_HOST }} << ENDSSH
             docker pull ${{ secrets.DOCKERHUB_USERNAME }}/fonts-visualizer:latest
             docker stop fonts-visualizer 2>/dev/null || true
             docker rm   fonts-visualizer 2>/dev/null || true
